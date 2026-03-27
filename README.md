@@ -30,11 +30,18 @@ This starts:
 
 ## Switch Model
 
+### Method 1: Direct file edit
 ```bash
 echo "opencode/gpt-5-nano" > ~/.opencode/current_model
 ```
 
-Both OpenCode and OpenSage will use the new model.
+### Method 2: Via opencode command (RECOMMENDED)
+```bash
+opencode --model opencode/gpt-5-nano --version
+# or any opencode command with --model flag
+```
+
+Both OpenCode and OpenSage will use the new model automatically.
 
 ## Usage
 
@@ -67,5 +74,6 @@ curl -X POST http://localhost:5557/v1/chat/completions \
 | `start_opencode_opensage.sh` | One-command startup script |
 | `opensage_api.py` | Memory API |
 | `opencode_dynamic_bridge.py` | LLM bridge |
+| `~/.opencode/bin/opencode` | Wrapper that updates model file when using `--model` |
 
 See `opencode-opensage.md` for complete documentation.

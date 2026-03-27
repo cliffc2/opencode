@@ -1,55 +1,71 @@
-# OpenCode + OpenSage Integration Skills
+# OpenCode + OpenSage Integration
 
-Skills for integrating OpenCode with OpenSage's Neo4j memory system and dynamic model bridge.
-
-## Skills
-
-- **opencode-opensage.md** - Complete integration guide (READ THIS FIRST)
-- **opensage-memory-api.md** - Memory API reference  
-- **opensage-local-setup.md** - OpenSage setup guide
+One command to start everything: `opensage-start`
 
 ## Quick Start
 
-### 1. Start Neo4j
 ```bash
-brew services start neo4j
-# or
-/opt/homebrew/bin/neo4j start
+# One command to start all services
+opensage-start
+
+# Or manually:
+./start_opencode_opensage.sh
 ```
 
-### 2. Start Memory API (port 5555)
+This starts:
+- Neo4j (graph database)
+- Memory API (port 5555)
+- Dynamic LLM Bridge (port 5557)
+
+## Default Model
+
+**`opencode/minimax-m2.5-free`**
+
+## Available Models
+
+- `opencode/minimax-m2.5-free` (default)
+- `opencode/mimo-v2-pro-free`
+- `opencode/nemotron-3-super-free`
+- `opencode/gpt-5-nano`
+
+## Switch Model
+
 ```bash
-cd /Users/ghostgear/opensage
-source .venv/bin/activate
-python opensage_api.py &
+echo "opencode/gpt-5-nano" > ~/.opencode/current_model
 ```
 
-### 3. Start Dynamic LLM Bridge (port 5557)
-```bash
-cd /Users/ghostgear/opensage
-source .venv/bin/activate
-python opencode_dynamic_bridge.py &
-```
+Both OpenCode and OpenSage will use the new model.
 
 ## Usage
 
 ### Memory
 ```bash
-!curl "http://localhost:5555/remember?key=notes&value=My notes"
-!curl "http://localhost:5555/recall?key=notes"
+curl "http://localhost:5555/remember?key=notes&value=My notes"
+curl "http://localhost:5555/recall?key=notes"
+curl "http://localhost:5555/list"
 ```
 
-### Switch Models (both OpenCode & OpenSage use same model)
+### LLM Bridge
 ```bash
-# Change model - both will use it!
-echo "opencode/gpt-5-nano" > ~/.opencode/current_model
+curl -X POST http://localhost:5557/v1/chat/completions \
+  -H "Content-Type: application/json" \
+  -d '{"messages": [{"role": "user", "content": "Hello"}]}'
 ```
+
+## Services
+
+| Service | Port | URL |
+|---------|------|-----|
+| Neo4j | 7474 | http://localhost:7474 |
+| Memory API | 5555 | http://localhost:5555 |
+| LLM Bridge | 5557 | http://localhost:5557 |
 
 ## Files
 
 | File | Description |
 |------|-------------|
-| `opensage_api.py` | HTTP API for Neo4j memory (port 5555) |
-| `opencode_dynamic_bridge.py` | LLM bridge with dynamic model (port 5557) |
-| `opensage_memory.py` | CLI memory tool |
-| `test_*.py` | Test scripts |
+| `start_opencode_opensage.sh` | One-command startup script |
+| `opensage_api.py` | Memory API |
+| `opencode_dynamic_bridge.py` | LLM bridge |
+
+See `opencode-opensage.md` for complete documentation.

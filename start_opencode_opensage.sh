@@ -45,7 +45,12 @@ echo "  Neo4j:      http://localhost:7474"
 echo "  Memory API: http://localhost:5555"
 echo "  LLM Bridge: http://localhost:5557"
 echo ""
-echo "Current model: $(cat ~/.opencode/current_model 2>/dev/null || echo 'opencode/mimo-v2-pro-free')"
+# Set default model if not set
+if [ ! -f ~/.opencode/current_model ]; then
+    echo "opencode/minimax-m2.5-free" > ~/.opencode/current_model
+fi
+
+echo "Current model: $(cat ~/.opencode/current_model)"
 echo ""
 echo "Usage:"
 echo "  Memory: curl 'http://localhost:5555/remember?key=X&value=Y'"

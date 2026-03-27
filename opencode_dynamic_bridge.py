@@ -21,7 +21,7 @@ from http.server import HTTPServer, BaseHTTPRequestHandler
 
 
 MODEL_FILE = os.path.expanduser("~/.opencode/current_model")
-DEFAULT_MODEL = "opencode/mimo-v2-pro-free"
+DEFAULT_MODEL = "opencode/minimax-m2.5-free"
 
 
 def get_current_model():

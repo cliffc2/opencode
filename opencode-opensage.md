@@ -1,6 +1,6 @@
-# OpenCode + OpenSage Integration
+# OpenCode + OpenSage Integration (opencodesage)
 
-Complete integration: OpenCode (frontend) ↔ OpenSage (backend with Neo4j memory)
+Complete integration: OpenCode (frontend) ↔ OpenSage (backend with Neo4j memory) in a portable folder.
 
 ## Architecture
 
@@ -23,98 +23,96 @@ Complete integration: OpenCode (frontend) ↔ OpenSage (backend with Neo4j memor
 
 ## Quick Start
 
-### 1. Start Neo4j
 ```bash
-brew services start neo4j
-# or
-/opt/homebrew/bin/neo4j start
+# One command to start all services
+./start_opencodesage.sh
+
+# This starts:
+# - Neo4j (graph database)
+# - Memory API (port 5555)
+# - Dynamic LLM Bridge (port 5557)
 ```
 
-### 2. Start OpenSage Memory API (port 5555)
+## Default Model
+
+**`opencode/minimax-m2.5-free`**
+
+## Available Models
+
+- `opencode/minimax-m2.5-free` (default)
+- `opencode/mimo-v2-pro-free`
+- `opencode/nemotron-3-super-free`
+- `opencode/gpt-5-nano`
+
+## Switch Model
+
+### Method 1: Direct file edit
 ```bash
-cd /Users/ghostgear/opensage
-source .venv/bin/activate
-python opensage_api.py &
+echo "opencode/gpt-5-nano" > .opencode/current_model
 ```
 
-### 3. Start Dynamic Bridge (port 5557)
+### Method 2: Via opencode command (RECOMMENDED)
 ```bash
-cd /Users/ghostgear/opensage
-source .venv/bin/activate
-python opencode_dynamic_bridge.py &
+bin/opencode --model opencode/gpt-5-nano --version
+# or any opencode command with --model flag
 ```
+
+Both OpenCode and OpenSage will use the new model automatically.
 
 ## Usage
 
-### Memory (from OpenCode)
+### Memory API
 ```bash
-# Store
-curl "http://localhost:5555/remember?key=notes&value=Important info"
-
-# Recall  
+curl "http://localhost:5555/remember?key=notes&value=My notes"
 curl "http://localhost:5555/recall?key=notes"
-
-# List
 curl "http://localhost:5555/list"
-
-# Search
 curl "http://localhost:5555/search?q=project"
 ```
 
-### Switch Models (for both OpenCode & OpenSage)
-```bash
-# Change model - both will use it!
-echo "opencode/gpt-5-nano" > ~/.opencode/current_model
-
-# Available models:
-# - opencode/mimo-v2-pro-free
-# - opencode/minimax-m2.5-free  
-# - opencode/nemotron-3-super-free
-# - opencode/gpt-5-nano
-
-# Check current model
-curl http://localhost:5557/
-```
-
-### Test the LLM Bridge
+### LLM Bridge
 ```bash
 curl -X POST http://localhost:5557/v1/chat/completions \
   -H "Content-Type: application/json" \
   -d '{"messages": [{"role": "user", "content": "Hello"}]}'
 ```
 
+## Services
+
+| Service | Port | URL |
+|---------|------|-----|
+| Neo4j | 7474 | http://localhost:7474 |
+| Memory API | 5555 | http://localhost:5555 |
+| LLM Bridge | 5557 | http://localhost:5557 |
+
 ## Files
 
-| File | Port | Description |
-|------|------|-------------|
-| `opensage_api.py` | 5555 | Neo4j memory HTTP API |
-| `opencode_dynamic_bridge.py` | 5557 | LLM bridge with dynamic model |
-| `test_opensage.py` | - | Basic backend tests |
-| `test_opensage_full.py` | - | Full test suite |
-| `test_coding_tasks.py` | - | Coding task tests |
+| File | Description |
+|------|-------------|
+| `start_opencodesage.sh` | One-command startup script |
+| `opensage_api.py` | Memory API |
+| `opencode_dynamic_bridge.py` | LLM bridge |
+| `bin/opencode` | Wrapper that updates model file when using `--model` |
+| `.opencode/current_model` | Shared model file |
+| `.env.example` | Template for environment variables |
 
-## Neo4j Credentials
+## Environment Variables (optional)
 
-- URL: bolt://127.0.0.1:7687
-- HTTP: http://localhost:7474
-- User: neo4j
-- Password: callgraphn4j!
+Create a `.env` file (copy from `.env.example`) to set:
+- `NEO4J_PASSWORD` (required)
+- `NEO4J_URI` (default: bolt://127.0.0.1:7687)
+- `NEO4J_USER` (default: neo4j)
+- `OPENSAGE_API_PORT` (default: 5555)
+- `OPENCODE_BRIDGE_PORT` (default: 5557)
+- `OPENCODE_HOME` (default: ~/.opencode)
+- `OPENCODE_CMD` (default: opencode on PATH)
 
-## API Endpoints
+## Design Highlights
 
-### Memory API (5555)
-| Endpoint | Description |
-|----------|-------------|
-| `GET /remember?key=X&value=Y` | Store memory |
-| `GET /recall?key=X` | Retrieve memory |
-| `GET /list` | List all memories |
-| `GET /search?q=X` | Search memories |
-
-### LLM Bridge (5557)
-| Endpoint | Description |
-|----------|-------------|
-| `GET /` | Get current model |
-| `POST /v1/chat/completions` | LLM chat (OpenAI compatible) |
+- ✅ Model synchronization: Changing model via `bin/opencode --model` updates the shared file, which the LLM bridge reads automatically
+- ✅ Persistent memory: Neo4j stores memories across sessions
+- ✅ Portability: Everything self-contained in the `opencodesage` folder
+- ✅ One-command startup: `start_opencodesage.sh` handles Neo4j, Memory API, and LLM Bridge
+- ✅ Secure: Neo4j password required via environment (not hardcoded)
 
 ## Test Results
 
@@ -129,14 +127,6 @@ curl -X POST http://localhost:5557/v1/chat/completions \
 - Neo4j Tools: ✓ PASS
 - Coding Tasks: ✓ PASS
 
-## Skills Location
+## See Also
 
-Skills in: `~/.opencode/skills/`
-
-To push to GitHub:
-```bash
-cd ~/opencode-skills
-git add .
-git commit -m "Add OpenCode + OpenSage integration with dynamic bridge"
-git push origin main
-```
+- `opensage-memory-api.md` - Memory API reference

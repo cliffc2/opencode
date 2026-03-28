@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-OpenSage HTTP API - Enhanced REST API for OpenSage memory.
+OpenSage HTTP API - Enhanced REST API for OpenSage memory (FIXED).
 
 Features:
 - CORS support for OpenCode browser UI
@@ -93,7 +93,8 @@ def remember(key: str, value: str) -> Dict[str, Any]:
     try:
         driver = get_driver()
         with driver.session() as session:
-            result = session.execute_query(
+            # Use session.run() instead of execute_query() for compatibility
+            result = session.run(
                 """
                 MERGE (m:Memory {key: $key}) 
                 SET m.value = $value, m.updated = timestamp()
@@ -102,6 +103,7 @@ def remember(key: str, value: str) -> Dict[str, Any]:
                 key=key,
                 value=value,
             )
+            result.consume()  # Ensure query completes
         logger.info(f"✓ Stored: {key}")
         return {"status": 200, "key": key, "value": value}
     except Exception as e:
@@ -117,11 +119,11 @@ def recall(key: str) -> Dict[str, Any]:
     try:
         driver = get_driver()
         with driver.session() as session:
-            result = session.execute_query(
+            result = session.run(
                 "MATCH (m:Memory {key: $key}) RETURN m.value as value",
                 key=key,
             )
-            records = list(result.records)
+            records = list(result)
             value = records[0]["value"] if records else None
         
         if value is None:
@@ -139,7 +141,7 @@ def list_memories(limit: int = 50) -> Dict[str, Any]:
     try:
         driver = get_driver()
         with driver.session() as session:
-            result = session.execute_query(
+            result = session.run(
                 f"""
                 MATCH (m:Memory) 
                 RETURN m.key as key, m.value as value, m.updated as updated
@@ -153,7 +155,7 @@ def list_memories(limit: int = 50) -> Dict[str, Any]:
                     "value": r["value"],
                     "updated": r["updated"],
                 }
-                for r in result.records
+                for r in result
             ]
         return {"status": 200, "count": len(memories), "memories": memories}
     except Exception as e:
@@ -169,7 +171,7 @@ def search(query: str, limit: int = 50) -> Dict[str, Any]:
     try:
         driver = get_driver()
         with driver.session() as session:
-            result = session.execute_query(
+            result = session.run(
                 f"""
                 MATCH (m:Memory) 
                 WHERE m.value CONTAINS $q OR m.key CONTAINS $q
@@ -180,7 +182,7 @@ def search(query: str, limit: int = 50) -> Dict[str, Any]:
             )
             memories = [
                 {"key": r["key"], "value": r["value"], "updated": r["updated"]}
-                for r in result.records
+                for r in result
             ]
         return {"status": 200, "query": query, "count": len(memories), "memories": memories}
     except Exception as e:
@@ -284,7 +286,7 @@ def main():
     """Start the API server"""
     print(f"""
 ╔════════════════════════════════════════╗
-║    OpenSage HTTP API v2 (Enhanced)     ║
+║    OpenSage HTTP API v2.1 (FIXED)      ║
 ╚════════════════════════════════════════╝
 
 Configuration:
